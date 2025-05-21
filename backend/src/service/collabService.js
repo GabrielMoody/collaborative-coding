@@ -29,7 +29,8 @@ const createProjectService = async (projectName, user) => {
 
 const getAllProjectsService = async (userId) => {
   try {
-    const projects = await FileMeta.find({ ownerID: userId, type: "project" }, "_id name createdAt")
+    const projects = await FileMeta.find({ 
+      $or: [{ownerID: userId}, {"collaborators.userId": userId}], type: "project" }, "_id name createdAt")
 
     if (!projects || projects.length === 0) {
       throw new NotFoundError('No projects found')

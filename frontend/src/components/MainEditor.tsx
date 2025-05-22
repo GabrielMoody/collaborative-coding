@@ -113,6 +113,7 @@ export default function MainEditor({projectName}: { projectName: string }) {
           loading={loading}
           onFileClick={handleFileClick}
           onToggleFolder={toggleFolder}
+          projectName={projectName}
         />
         <CodeEditor
           fileContent={fileContent || ''}

@@ -123,9 +123,9 @@ const createNewFolderorFileService = async (name, projectId, folderId, type, use
     }
 
     const folder = await FileMeta.findOne({ name: folderId, type: "folder"}, "_id")
-    const project = await FileMeta.findOne({ name: projectId, type: "project"}, "_id")
+    const project = await FileMeta.findOne({ _id: projectId, type: "project"}, "_id")
 
-    if (!projectId) {
+    if (!project) {
       throw new NotFoundError('Project was not found')
     }
 
@@ -165,6 +165,52 @@ const createNewFolderorFileService = async (name, projectId, folderId, type, use
     throw new Error('Error creating folder: ' + error.message)
   } finally {
     session.endSession();
+  }
+}
+
+const deleteFolderService = async (folderName, projectId) => {
+  try {
+    const folder = await FileMeta.find({name: folderName, projectId: projectId, type: "folder"})
+    const children = await FileMeta.find({parentId: folder._id})
+    
+    if (children.length > 0) {
+      for (const child of children) {
+        await deleteFolderService(child.name)
+      }
+    }
+
+    await FileMeta.deleteOne({name: folderName, type: "folder"})
+  } catch (error) {
+    console.error("Error deleting folder:", error)
+    throw new Error('Error deleting folder: ' + error.message)
+  }
+}
+
+const deleteFileService = async (fileName, projectId, user) => {
+  try {
+    const file = await FileMeta.findOneAndDelete({name: fileName, projectId: projectId, type: "file"})
+    
+    if (!file) {
+      throw new NotFoundError('File not found')
+    }
+
+    const doc = connection.get("files", file._id.toString())
+    connection.agent.stream.agent = { connectSession : {userId: user.id}}
+    doc.fetch(function (err) {
+      if (err) throw err;
+      if (doc.type === null) {
+        console.log('Document already deleted or does not exist.');
+        return;
+      }
+
+      doc.destroy(function (err) {
+        if (err) throw err;
+        console.log('File deleted from ShareDB.');
+      });
+    });
+
+  } catch (error) {
+    console.error("Error deleting folder/file:", error)
   }
 }
 
@@ -212,5 +258,7 @@ module.exports = {
   createNewFolderorFileService,
   getProjectService,
   getAllProjectsService,
-  addContributorsService
+  addContributorsService,
+  deleteFolderService,
+  deleteFileService
 }

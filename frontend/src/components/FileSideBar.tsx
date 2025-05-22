@@ -7,6 +7,7 @@ interface FileSidebarProps {
   expandedFolders: Record<string, boolean>;
   selectedFileId: string | null;
   loading: boolean;
+  projectName: string | null;
   onFileClick: (file: any) => void;
   onToggleFolder: (folderId: string) => void;
 }
@@ -20,6 +21,7 @@ export default function FileSideBar({
   loading,
   onFileClick,
   onToggleFolder,
+  projectName,
 }: FileSidebarProps) {
   const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
   const [menuType, setMenuType] = useState<string | null>(null);
@@ -65,6 +67,10 @@ export default function FileSideBar({
       setShowInput(true);
       setPendingAction(action);
       setMenuPos(null);
+    } else if (action.match(/delete/i)) {
+      setPendingAction(action);
+      handleDelete();
+      setMenuPos(null);
     } else {
       // Handle other actions (rename, delete, etc.) here
       setMenuPos(null);
@@ -82,7 +88,7 @@ export default function FileSideBar({
     };
 
     try {
-      await fetch(`${apiBaseUrl}/collabs/projects/test/path/${fullPath}/create`, {
+      await fetch(`${apiBaseUrl}/collabs/projects/${projectName}/path/${fullPath}/create`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -90,6 +96,35 @@ export default function FileSideBar({
         },
         body: JSON.stringify(body),
       });
+    } catch (err) {
+      console.error('Error creating file/folder:', err);
+    }
+    setShowInput(false);
+    setInputValue('');
+    setPendingAction(null);
+    setMenuItem(null);
+  };
+
+  const handleDelete = async () => {
+    if (!menuItem || !pendingAction) return;
+    
+    const fullPath = getFullPath(menuItem.id);
+    const body = {
+      fileName: menuItem.name,
+      type: menuItem.type
+    };
+
+    try {
+      const data = await fetch(`${apiBaseUrl}/collabs/projects/${projectName}/path/${fullPath}/delete`, {
+        method: 'DELETE',
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+      });
+
+      console.log('Delete response:', data.json());
     } catch (err) {
       console.error('Error creating file/folder:', err);
     }

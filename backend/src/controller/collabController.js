@@ -1,7 +1,36 @@
 const {validationResult} = require("express-validator")
-const { createNewFolderorFileService, createProjectService, addContributorsService, getProjectService, getAllProjectsService} = require("../service/collabService")
+const { 
+  createNewFolderorFileService, 
+  createProjectService, 
+  addContributorsService, 
+  getProjectService, 
+  getAllProjectsService,
+  deleteFileService,
+  deleteFolderService
+} = require("../service/collabService")
 
-const createNewFileorFolderController = async (req, res, next) => {
+const deleteFolderOrFileController = async (req, res) => {
+  try {
+    const { fileName, type } = req.body
+    const projectId = req.params[0]
+
+    if (type === "folder") {
+      await deleteFolderService(fileName, projectId)
+    } else if (type === "file") {
+      await deleteFileService(fileName, projectId, req.user)
+    }
+
+    res.status(200).json({
+      message: "File/Folder deleted successfully",
+    })
+
+  } catch (error) {
+    console.error("Error in deleteFileController:", error)
+    return res.status(500).json({ error: "Internal server error" })
+  }
+}
+
+const createNewFileorFolderController = async (req, res) => {
   try {
     const errors = validationResult(req)
     
@@ -98,5 +127,6 @@ module.exports = {
   createNewFileorFolderController,
   addContributorsController,
   getAllProjectsController,
-  getProjectController
+  getProjectController,
+  deleteFolderOrFileController,
 }

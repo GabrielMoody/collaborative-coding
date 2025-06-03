@@ -39,6 +39,7 @@ export default function MainEditor({projectName}: { projectName: string }) {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,
           },
+          credentials: 'include',
         });
         if (!res.ok) throw new Error('Failed to fetch files');
         const data = await res.json();
@@ -48,13 +49,13 @@ export default function MainEditor({projectName}: { projectName: string }) {
         setCollaborators(data.data.collaborators || []);
       } catch (err) {
         console.error('Error fetching files:', err);
-        setProject({});
+        setProject('');
       } finally {
         setLoading(false);
       }
     }
     fetchFiles();
-  }, [token]);
+  }, [token, projectName]);
 
   useEffect(() => {
     if (!token) return;

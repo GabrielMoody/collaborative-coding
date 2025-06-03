@@ -1,5 +1,10 @@
 import MainEditor from '@/components/MainEditor';
 
-export default function ProjectEditorPage({ params }: { params: { projectname: string } }) {
-  return <MainEditor projectName={params.projectname} />;
+type PageProps = {
+  params: Promise<{ projectname: string }>;
+}
+
+export default async function Page({ params }: PageProps) {
+  const { projectname } = await params;
+  return <MainEditor projectName={projectname} />;
 }

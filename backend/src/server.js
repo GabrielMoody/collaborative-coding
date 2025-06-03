@@ -1,8 +1,4 @@
 const express = require("express")
-const WebSocket = require("ws")
-const WebSocketJSONStream = require("@teamwork/websocket-json-stream")
-const ShareDB = require("sharedb")
-const sharedbMongo = require("sharedb-mongo")
 
 const http = require("http")
 const morgan = require("morgan")
@@ -20,7 +16,10 @@ const setupShareDBWebSocket = require("./sharedb/connection")
 
 app.use(express.json())
 app.use(express.urlencoded({extended: true}))
-app.use(cors())
+app.use(cors({
+  origin: process.env.CLIENT_URL || "http://localhost:3000",
+  credentials: true,
+}))
 app.use(morgan("dev"))
 
 app.use("/api/collabs", collabRoutes)

@@ -75,7 +75,7 @@ export default function EditorHeader({ projectName, ownerName, collaborators }: 
     }
   };
 
-  const handleSearch = (query: string) => {
+  const handleSearch = () => {
     setShowSearch(false);
   };
 
@@ -137,7 +137,6 @@ export default function EditorHeader({ projectName, ownerName, collaborators }: 
                     Add
                   </Button>
                   <Button
-                    variant="outline"
                     onClick={() => setConfirmUser(null)}
                   >
                     Cancel

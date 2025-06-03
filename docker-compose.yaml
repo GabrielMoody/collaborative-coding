@@ -1,46 +1,49 @@
-version: '3.8'
-
 services:
-  client:
-    build:
-      context: /frontend
-      dockerfile: Dockerfile
-    container_name: client
-    ports:
-      - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    depends_on:
-      - server
-
-  server:
-    build:
-      context: /backend
-      dockerfile: Dockerfile
-    container_name: server
-    ports:
-      - "8000:8000"
-    environment:
-      - MONGO_URI=mongodb://collabs:27017
-      - JWT_SECRET=secret
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
-    depends_on:
-      - mongo
-
-  mongo:
+  mongo_db:
     image: mongo
-    container_name: mongodb
+    container_name: mongo_db
     ports:
       - "27017:27017"
     command: >
       mongod --replSet rs0 --bind_ip_all
     volumes:
       - mongo-data:/data/db
+      # - ./init-replica.sh:/docker-entrypoint-initdb.d/init-mongo.sh:ro
+
+  server:
+    build:
+      context: /backend
+      dockerfile: Dockerfile
+    container_name: server
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - MONGO_URL=mongodb://mongo_db:27017/collabs?replicaSet=rs0
+      - JWT_SECRET=secret
+      - CLIENT_URL=http://client:3000
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - ./init-replica.sh:/app/init-replica.sh
+    depends_on:
+      - mongo_db
+      
+  client:
+    build:
+      context: /frontend
+      dockerfile: Dockerfile
+    container_name: client
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_BASE_URL=http://server:8000/api
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - server 
 
 volumes:
   mongo-data:
